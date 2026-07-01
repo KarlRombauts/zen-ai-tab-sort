@@ -551,6 +551,151 @@
     getExistingGroupNames,
   });
 
+  // --- Providers ---
+  const PROVIDERS = {
+    gemini: {
+      build(prompt) {
+        const key = PREFS.geminiKey();
+        if (!key) throw new Error("Gemini API key not set");
+        const model = PREFS.geminiModel();
+        return {
+          url: `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
+            model
+          )}:generateContent?key=${encodeURIComponent(key)}`,
+          init: {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: {
+                temperature: 0.2,
+                responseMimeType: "application/json",
+                responseSchema: GEMINI_SCHEMA,
+              },
+            }),
+          },
+        };
+      },
+      extractText(json) {
+        const t = json?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (typeof t !== "string") throw new Error("Gemini: no text in response");
+        return t;
+      },
+    },
+
+    claude: {
+      build(prompt) {
+        const key = PREFS.claudeKey();
+        if (!key) throw new Error("Claude API key not set");
+        return {
+          url: "https://api.anthropic.com/v1/messages",
+          init: {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-api-key": key,
+              "anthropic-version": "2023-06-01",
+              "anthropic-dangerous-direct-browser-access": "true",
+            },
+            body: JSON.stringify({
+              model: PREFS.claudeModel(),
+              max_tokens: 1024,
+              messages: [{ role: "user", content: prompt }],
+              output_config: {
+                format: { type: "json_schema", schema: STRICT_SCHEMA },
+              },
+            }),
+          },
+        };
+      },
+      extractText(json) {
+        if (json?.stop_reason === "refusal") throw new Error("Claude refused the request");
+        const block =
+          Array.isArray(json?.content) &&
+          json.content.find((b) => b && b.type === "text");
+        const t = block && block.text;
+        if (typeof t !== "string") throw new Error("Claude: no text in response");
+        return t;
+      },
+    },
+
+    openai: {
+      build(prompt) {
+        const key = PREFS.openaiKey();
+        if (!key) throw new Error("OpenAI API key not set");
+        return {
+          url: "https://api.openai.com/v1/chat/completions",
+          init: {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${key}`,
+            },
+            body: JSON.stringify({
+              model: PREFS.openaiModel(),
+              temperature: 0.2,
+              messages: [{ role: "user", content: prompt }],
+              response_format: {
+                type: "json_schema",
+                json_schema: { name: "tab_groups", strict: true, schema: STRICT_SCHEMA },
+              },
+            }),
+          },
+        };
+      },
+      extractText(json) {
+        const t = json?.choices?.[0]?.message?.content;
+        if (typeof t !== "string") throw new Error("OpenAI: no text in response");
+        return t;
+      },
+    },
+
+    ollama: {
+      build(prompt) {
+        const base = PREFS.ollamaUrl().replace(/\/+$/, "");
+        return {
+          url: `${base}/api/chat`,
+          init: {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              model: PREFS.ollamaModel(),
+              stream: false,
+              format: "json",
+              options: { temperature: 0.2 },
+              messages: [{ role: "user", content: prompt }],
+            }),
+          },
+        };
+      },
+      extractText(json) {
+        const t = json?.message?.content;
+        if (typeof t !== "string") throw new Error("Ollama: no text in response");
+        return t;
+      },
+    },
+  };
+
+  const callLLM = async (prompt) => {
+    const providerName = PREFS.provider();
+    const provider = PROVIDERS[providerName];
+    if (!provider) throw new Error(`unknown provider: ${providerName}`);
+    const req = provider.build(prompt);
+    const resp = await fetch(req.url, req.init);
+    if (!resp.ok) {
+      let body = "";
+      try {
+        body = await resp.text();
+      } catch (e) {}
+      throw new Error(`${providerName} HTTP ${resp.status}: ${body.slice(0, 300)}`);
+    }
+    const json = await resp.json();
+    const text = provider.extractText(json);
+    return parseGroupsJSON(text);
+  };
+
+  window.TidyTabsDev = Object.assign(window.TidyTabsDev || {}, { callLLM, PROVIDERS });
+
   const askAIForMultipleTopics = async (tabs) => {
     if (!Array.isArray(tabs) || tabs.length === 0) return [];
 
