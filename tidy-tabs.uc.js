@@ -413,6 +413,144 @@
   // Dev handle for manual verification via the Browser Console.
   window.TidyTabsDev = Object.assign(window.TidyTabsDev || {}, { PREFS });
 
+  // --- Response JSON schemas ---
+  // Gemini's responseSchema is an OpenAPI subset — no additionalProperties.
+  const GEMINI_SCHEMA = {
+    type: "object",
+    properties: {
+      groups: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            name: { type: "string" },
+            tabIndices: { type: "array", items: { type: "integer" } },
+          },
+          required: ["name", "tabIndices"],
+        },
+      },
+    },
+    required: ["groups"],
+  };
+  // OpenAI/Claude strict json_schema — requires additionalProperties:false.
+  const STRICT_SCHEMA = {
+    type: "object",
+    additionalProperties: false,
+    properties: {
+      groups: {
+        type: "array",
+        items: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            name: { type: "string" },
+            tabIndices: { type: "array", items: { type: "integer" } },
+          },
+          required: ["name", "tabIndices"],
+        },
+      },
+    },
+    required: ["groups"],
+  };
+
+  // --- Tab info extraction ---
+  const getTabUrl = (tab) => {
+    try {
+      const browser =
+        tab.linkedBrowser ||
+        tab._linkedBrowser ||
+        gBrowser?.getBrowserForTab?.(tab);
+      const spec = browser?.currentURI?.spec || "";
+      if (!spec || spec.startsWith("about:")) return "";
+      return spec;
+    } catch (e) {
+      return "";
+    }
+  };
+
+  const getExistingGroupNames = (workspaceId) => {
+    if (!workspaceId) return [];
+    const names = [];
+    document
+      .querySelectorAll(`tab-group:has(tab[zen-workspace-id="${workspaceId}"])`)
+      .forEach((el) => {
+        const label = el.getAttribute("label");
+        if (label) names.push(label);
+      });
+    return names;
+  };
+
+  // --- Prompt ---
+  const buildPrompt = (tabInfos, existingGroupNames) => {
+    const lines = tabInfos.map(
+      (t) => `${t.index}. ${t.title}${t.url ? " — " + t.url : ""}`
+    );
+    const existing =
+      existingGroupNames && existingGroupNames.length
+        ? `\nExisting groups (prefer one of these when a tab clearly fits):\n${existingGroupNames
+            .map((n) => `- ${n}`)
+            .join("\n")}\n`
+        : "";
+    return [
+      "You organize browser tabs into groups by topic.",
+      existing,
+      "Tabs (index. title — url):",
+      lines.join("\n"),
+      "",
+      "Rules:",
+      "- Group tabs that share a clear topic or task.",
+      "- Reuse an existing group name when a tab fits it; otherwise create a concise new name.",
+      "- Group names: Title Case, at most 24 characters.",
+      "- Only include a tab if it belongs with at least one other tab. Omit tabs that don't fit any group.",
+      '- Return JSON only, matching: {"groups":[{"name":"...","tabIndices":[0,1]}]}',
+    ].join("\n");
+  };
+
+  // --- Response parsing ---
+  const parseGroupsJSON = (text) => {
+    if (typeof text !== "string") throw new Error("no text in response");
+    let s = text.trim();
+    const fence = s.match(/```(?:json)?\s*([\s\S]*?)```/i);
+    if (fence) s = fence[1].trim();
+    const data = JSON.parse(s);
+    const groups = Array.isArray(data) ? data : data && data.groups;
+    if (!Array.isArray(groups)) throw new Error("response missing groups array");
+    return groups;
+  };
+
+  const flattenGroups = (groups, tabCount) => {
+    const out = [];
+    const seen = new Set();
+    for (const g of groups) {
+      const name = g && typeof g.name === "string" ? g.name.trim() : "";
+      if (!name) continue;
+      const idxs = g && Array.isArray(g.tabIndices) ? g.tabIndices : [];
+      for (const raw of idxs) {
+        const i = Number(raw);
+        if (!Number.isInteger(i) || i < 0 || i >= tabCount || seen.has(i)) continue;
+        seen.add(i);
+        out.push({ index: i, group: name });
+      }
+    }
+    return out;
+  };
+
+  const dropSmallGroups = (pairs) => {
+    const counts = {};
+    pairs.forEach((p) => {
+      counts[p.group] = (counts[p.group] || 0) + 1;
+    });
+    return pairs.filter((p) => counts[p.group] >= 2);
+  };
+
+  window.TidyTabsDev = Object.assign(window.TidyTabsDev || {}, {
+    buildPrompt,
+    parseGroupsJSON,
+    flattenGroups,
+    dropSmallGroups,
+    getExistingGroupNames,
+  });
+
   const askAIForMultipleTopics = async (tabs) => {
     if (!Array.isArray(tabs) || tabs.length === 0) return [];
 
