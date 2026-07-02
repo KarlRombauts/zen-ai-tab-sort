@@ -481,6 +481,7 @@
       "- Group tabs about the SAME subject, entity, task, or research thread. A search query, its result pages, related maps, menus, articles, docs, and repos about one thing ALL belong in the same group (e.g. a 'Grillo's Pickles' web search, its homepage, and a 'where to buy' page go together).",
       "- Prefer FEWER, BROADER groups over many tiny ones. If two would-be groups are really about the same underlying topic (one package manager, one restaurant, one car task), MERGE them into one.",
       "- Be COMPREHENSIVE: put every tab that clearly relates to at least one other tab into a group. Do not create a group and then leave obvious members of it ungrouped. Only omit a tab if it has no clear connection to any other tab.",
+      "- But do NOT force unrelated tabs together. Leaving a tab ungrouped is better than a bad fit. Never invent a broad catch-all group (like 'Ai', 'Developer', 'Misc', 'Various', 'Web', 'Tools') to absorb leftovers — a group must share ONE specific, concrete subject, not a loose theme.",
       "- Do NOT group tabs merely because they share a domain (e.g. several github.com repos, or several google.com searches). The domain is a hint for identifying a tab's subject, not a reason to group. Group by the underlying subject only.",
       "- Reuse an existing group name (listed above) whenever a tab fits it, instead of inventing a near-duplicate.",
       "",
