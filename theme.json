@@ -1,6 +1,6 @@
 {
-  "id": "zen-tidy-tabs",
-  "name": "Zen Tidy Tabs",
+  "id": "zen-ai-tab-sort",
+  "name": "Zen AI Tab Sort",
   "description": "Sort your tabs with your choice of AI — Gemini, Claude, OpenAI, or Ollama — but make it look awesome!",
   "scripts": {
     "tidy-tabs.uc.js": {
@@ -9,14 +9,14 @@
       ]
     }
   },
-  "homepage": "https://github.com/Vertex-Mods/Zen-Tidy-Tabs",
+  "homepage": "https://github.com/KarlRombauts/zen-ai-tab-sort",
   "style": {
     "chrome": "userChrome.css"
   },
   "preferences": "preferences.json",
-  "readme": "https://raw.githubusercontent.com/Vertex-Mods/Zen-Tidy-Tabs/main/README.md",
-  "image": "https://raw.githubusercontent.com/Vertex-Mods/Zen-Tidy-Tabs/main/image.png",
-  "author": "Vertex",
+  "readme": "https://raw.githubusercontent.com/KarlRombauts/zen-ai-tab-sort/main/README.md",
+  "image": "https://raw.githubusercontent.com/KarlRombauts/zen-ai-tab-sort/main/image.png",
+  "author": "KarlRombauts",
   "version": "2.0.0",
   "tags": [
     "Vertex",
