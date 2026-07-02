@@ -6,16 +6,12 @@
 
 (() => {
   const CONFIG = {
-    SIMILARITY_THRESHOLD: 0.45,
-    GROUP_SIMILARITY_THRESHOLD: 0.65, // Lowered from 0.75 to be more inclusive for existing groups
     MIN_TABS_FOR_SORT: 6, // This is the ammount of tabs for the button to show, not the ammount of tabs you need in a group
     DEBOUNCE_DELAY: 250,
     ANIMATION_DURATION: 800,
     MAX_INIT_CHECKS: 50,
     INIT_CHECK_INTERVAL: 100,
     CONSOLIDATION_DISTANCE_THRESHOLD: 2,
-    EMBEDDING_BATCH_SIZE: 5,
-    EXISTING_GROUP_BOOST: 0.1, // Boost similarity score for existing groups to prefer them
   };
 
   // --- Globals & State ---
@@ -138,15 +134,6 @@
       console.error("Error getting tab title for tab:", tab, e);
       return "Error Processing Tab";
     }
-  };
-
-  const toTitleCase = (str) => {
-    if (!str || typeof str !== "string") return "";
-    return str
-      .toLowerCase()
-      .split(" ")
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(" ");
   };
 
   const levenshteinDistance = (a, b) => {
