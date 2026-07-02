@@ -349,21 +349,29 @@
     );
     const existing =
       existingGroupNames && existingGroupNames.length
-        ? `\nExisting groups (prefer one of these when a tab clearly fits):\n${existingGroupNames
+        ? `\nExisting groups (reuse one of these names whenever a tab fits it):\n${existingGroupNames
             .map((n) => `- ${n}`)
             .join("\n")}\n`
         : "";
     return [
-      "You organize browser tabs into groups by topic.",
+      "You organize a user's open browser tabs into a small number of clear, useful groups.",
       existing,
       "Tabs (index. title — url):",
       lines.join("\n"),
       "",
+      "How to group:",
+      "- Group tabs about the SAME subject, entity, task, or research thread. A search query, its result pages, related maps, menus, articles, docs, and repos about one thing ALL belong in the same group (e.g. a 'Grillo's Pickles' web search, its homepage, and a 'where to buy' page go together).",
+      "- Prefer FEWER, BROADER groups over many tiny ones. If two would-be groups are really about the same underlying topic (one package manager, one restaurant, one car task), MERGE them into one.",
+      "- Be COMPREHENSIVE: put every tab that clearly relates to at least one other tab into a group. Do not create a group and then leave obvious members of it ungrouped. Only omit a tab if it has no clear connection to any other tab.",
+      "- Reuse an existing group name (listed above) whenever a tab fits it, instead of inventing a near-duplicate.",
+      "",
+      "Naming:",
+      "- Name each group after its shared subject as a short, specific noun phrase in Title Case, at most 24 characters.",
+      "- Avoid vague or single generic words like 'Space', 'Misc', 'Problem', or 'Car'. Use the concrete subject instead (e.g. 'Bun Package Manager', 'Car Interior Cleaning', 'Trilium Notes').",
+      "",
       "Rules:",
-      "- Group tabs that share a clear topic or task.",
-      "- Reuse an existing group name when a tab fits it; otherwise create a concise new name.",
-      "- Group names: Title Case, at most 24 characters.",
-      "- Only include a tab if it belongs with at least one other tab. Omit tabs that don't fit any group.",
+      "- Every group must contain at least 2 tabs.",
+      "- Each tab index appears in at most one group.",
       '- Return JSON only, matching: {"groups":[{"name":"...","tabIndices":[0,1]}]}',
     ].join("\n");
   };
