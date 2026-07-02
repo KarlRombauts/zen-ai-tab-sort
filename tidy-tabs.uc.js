@@ -1477,11 +1477,11 @@
             // --- Start Animation logic ---
             const pathElement = separator.querySelector("#separator-path");
             if (pathElement) {
-              const maxAmplitude = 2.2;
+              const maxAmplitude = 6; // wave height (SVG user units; ~0.5px each)
               const frequency = 22; // number of wave periods across the width
               const segments = 180; // point count → curve smoothness
               const growthDuration = 350; // amplitude fade-in
-              const scrollPerSec = 45; // % of width the wave travels left per second
+              const scrollPerSec = 16; // % of width the wave travels left per second
               const k = (2 * Math.PI * frequency) / 100;
               const startTime = performance.now();
 
