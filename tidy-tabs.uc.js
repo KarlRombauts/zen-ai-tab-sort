@@ -1395,6 +1395,7 @@
                                         <path d="M16.719 1.7134C17.4929-0.767192 20.7999 0.264626 20.026 2.74523C19.2521 5.22583 18.1514 8.75696 17.9629 9.36C17.7045 10.1867 16.1569 15.1482 15.899 15.9749L19.2063 17.0068C20.8597 17.5227 20.205 19.974 18.4514 19.4268L8.52918 16.331C6.87208 15.8139 7.62682 13.3938 9.28426 13.911L12.5916 14.9429C12.8495 14.1163 14.3976 9.15491 14.6555 8.32807C14.9135 7.50122 15.9451 4.19399 16.719 1.7134Z" stroke="none"/>
                                     </g>
                                 </svg>
+                                <label class="sort-button-label" value="Tidy"/>
                             </hbox>
                         </toolbarbutton>
                     `);
@@ -1476,33 +1477,29 @@
             // --- Start Animation logic ---
             const pathElement = separator.querySelector("#separator-path");
             if (pathElement) {
-              const maxAmplitude = 3;
-              const frequency = 8;
-              const segments = 50;
-              const growthDuration = 500;
-              let t = 0;
-              let startTime = performance.now();
+              const maxAmplitude = 2.2;
+              const frequency = 22; // number of wave periods across the width
+              const segments = 180; // point count → curve smoothness
+              const growthDuration = 350; // amplitude fade-in
+              const scrollPerSec = 45; // % of width the wave travels left per second
+              const k = (2 * Math.PI * frequency) / 100;
+              const startTime = performance.now();
 
               function animateWaveLoop(timestamp) {
                 // Check if animation should continue
                 if (sortAnimationId === null) return;
 
                 const elapsedTime = timestamp - startTime;
-                const growthProgress = Math.min(
-                  elapsedTime / growthDuration,
-                  1
-                );
-                const currentAmplitude = maxAmplitude * growthProgress;
-
-                t += 0.5;
+                const currentAmplitude =
+                  maxAmplitude * Math.min(elapsedTime / growthDuration, 1);
+                // Time-based leftward shift: smooth and frame-rate independent.
+                // sin(k*(x + shift)) with shift increasing moves the wave left.
+                const shift = (elapsedTime / 1000) * scrollPerSec;
 
                 const points = [];
                 for (let i = 0; i <= segments; i++) {
                   const x = (i / segments) * 100;
-                  const y =
-                    1 +
-                    currentAmplitude *
-                      Math.sin((x / (100 / frequency)) * 2 * Math.PI + t * 0.1);
+                  const y = 1 + currentAmplitude * Math.sin(k * (x + shift));
                   points.push(`${x.toFixed(2)},${y.toFixed(2)}`);
                 }
 
